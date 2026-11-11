@@ -1,0 +1,51 @@
+# Apache .htaccess for wgetcloud.world (VitePress Static Deployment)
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+
+  # 强制规范主域名 (www -> 裸域) 与 HTTPS 301 重定向
+  RewriteCond %{HTTPS} off [OR]
+  RewriteCond %{HTTP_HOST} ^www\.wgetcloud\.world$ [NC]
+  RewriteRule ^(.*)$ https://wgetcloud.world/$1 [L,R=301]
+
+  # 消除路径中的连续多斜杠 (// -> /)
+  RewriteCond %{THE_REQUEST} ^[A-Z]{3,}\s/+((?:[^?\s]+/)*)?/+([^?\s]*) [NC]
+  RewriteRule ^ https://wgetcloud.world/%1%2 [L,R=301]
+
+  # 支持 VitePress Clean URLs (去掉 .html 后缀)
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteCond %{REQUEST_FILENAME}.html -f
+  RewriteRule ^(.*)$ $1.html [L]
+
+  # 404 回退页面
+  ErrorDocument 404 /404.html
+</IfModule>
+
+# 开启 Gzip 压缩
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css application/javascript application/json application/xml image/svg+xml
+</IfModule>
+
+# 静态资源浏览器长效缓存
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType image/jpg "access plus 1 year"
+  ExpiresByType image/jpeg "access plus 1 year"
+  ExpiresByType image/gif "access plus 1 year"
+  ExpiresByType image/png "access plus 1 year"
+  ExpiresByType image/webp "access plus 1 year"
+  ExpiresByType image/svg+xml "access plus 1 year"
+  ExpiresByType text/css "access plus 1 month"
+  ExpiresByType application/javascript "access plus 1 month"
+  ExpiresDefault "access plus 2 days"
+</IfModule>
+
+# 安全响应头
+<IfModule mod_headers.c>
+  Header set X-Content-Type-Options "nosniff"
+  Header set X-Frame-Options "SAMEORIGIN"
+  Header set Referrer-Policy "strict-origin-when-cross-origin"
+  Header set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+</IfModule>
